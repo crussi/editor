@@ -6,19 +6,16 @@ import (
 	"os"
 )
 
-// Liner is the interface every version must satisfy.
 type Liner interface {
 	GetLine(prompt string, buffer []byte) bool
 }
 
 func main() {
-	// Command-line flag to choose version
-	version := flag.Int("v", 5, "GetLine version to use (1–5)")
+	version := flag.Int("v", 5, "GetLine version to use (1–6)")
 	flag.Parse()
 
 	var active Liner
 
-	// Select version based on flag
 	switch *version {
 	case 1:
 		active = getlineV1{}
@@ -30,6 +27,10 @@ func main() {
 		active = getlineV4{}
 	case 5:
 		active = getlineV5{}
+	case 6:
+		active = getlineV6{
+			Allowed: []string{"yes", "no", "maybe"},
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown version %d — using V5\n", *version)
 		active = getlineV5{}
@@ -37,11 +38,19 @@ func main() {
 
 	buffer := make([]byte, bufSize)
 
-	// Pre-load a default value so Version Three+ has something to show.
-	copy(buffer, "default text")
+	// Only preload default text for versions 3–5
+	switch *version {
+	case 3, 4, 5:
+		copy(buffer, "default text")
+	}
 
 	fmt.Println("Get_Line demo — The Craft of Text Editing (Finseth)")
 	fmt.Println()
+
+	// If this is getlineV6, show allowed responses
+	if v6, ok := active.(getlineV6); ok {
+		fmt.Printf("Allowed responses: %v\n", v6.Allowed)
+	}
 
 	ok := active.GetLine("Enter some text", buffer)
 	if !ok {
