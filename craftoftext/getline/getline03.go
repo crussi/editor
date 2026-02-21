@@ -68,13 +68,3 @@ func (g getlineV3) GetLine(prompt string, buffer []byte) bool {
 		}
 	}
 }
-
-// clen returns the number of bytes before the first NUL in buffer.
-func clen(b []byte) int {
-	for i, v := range b {
-		if v == 0 {
-			return i
-		}
-	}
-	return len(b)
-}

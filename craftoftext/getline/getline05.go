@@ -1,8 +1,9 @@
 package main
 
-// getline04.go
+// getline05.go
 //
-// GetLine Version Four — from "The Craft of Text Editing" by Craig Finseth.
+// GetLine Version Five — from "The Craft of Text Editing" by Craig Finseth.
+// Ch 1 Question 1 - Modify the latest version of Get_Line to accept only numeric responses. What sort of error messages should be given? (Easy)
 //
 
 import (
@@ -10,26 +11,13 @@ import (
 	"unicode"
 )
 
-type getlineV4 struct{}
+type getlineV5 struct{}
 
-// GetLine — Version Four.
-//
-// Adds over Version Three:
-//   - left / right cursor movement (arrow keys)
-//   - Home / End keys
-//   - Forward delete (Del key)
-//   - Insert / replace mode toggle (Ctrl-Z)
-//   - Quote next character literally (Ctrl-P)
-//   - Clear line (Ctrl-U)
-//   - Restore default (Ctrl-R)
-//   - Redisplay (Ctrl-L)
-//   - Cancel / abort (Ctrl-G) — returns false
-//
 // The function signature is unchanged from previous versions so that
 // main.go needs no edits.  The default value is whatever is already
 // in buffer when the function is called; pre-load it before calling
 // if you want a default.
-func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
+func (g getlineV5) GetLine(prompt string, buffer []byte) bool {
 	if len(buffer) < 2 {
 		return false // safety check
 	}
@@ -83,6 +71,13 @@ func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
 
 		// ── Printable character ──────────────────────────────────────────
 		if key > 0 && unicode.IsPrint(rune(key)) {
+
+			// numeric-only filter
+			if key < '0' || key > '9' {
+				beep()
+				continue
+			}
+
 			if !wasKey {
 				buffer[0] = 0
 				cursor = 0
