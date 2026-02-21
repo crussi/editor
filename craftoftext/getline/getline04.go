@@ -62,19 +62,43 @@ func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
 	wasKey := false
 	insert := true
 
+	// Print helper bar once before entering the loop
+	printHelper := func() {
+		mode := "INS"
+		if !insert {
+			mode = "REP"
+		}
+		fmt.Print("\r\033[2K") // clear line
+		fmt.Printf("[%s] ← → Home End | BS Del | Ctrl-U clear | Ctrl-R default | Ctrl-P quote | Ctrl-G cancel | Ctrl-L redisplay", mode)
+		fmt.Println()
+	}
+
+	// Print helper bar initially
+	printHelper()
+
 	for {
-		// ── Redisplay ────────────────────────────────────────────────
-		fmt.Print("\r\033[2K") // carriage return + erase whole line
+		// ── Redisplay input line only ─────────────────────────────────────
+		fmt.Print("\r\033[2K") // clear input line
 		fmt.Printf("%s: %s", prompt, cstring(buffer))
 
-		// Move the terminal cursor to the right column.
+		// Move cursor to correct column
 		col := len(prompt) + 2 + cursor
 		fmt.Printf("\r\033[%dC", col)
 
-		// ── Read one key ─────────────────────────────────────────────
+		// ── Read key ─────────────────────────────────────────────────────
 		key := keyGetV4()
 
-		// ── Printable character ──────────────────────────────────────
+		// If insert/replace mode changed, redraw helper bar
+		if key == keyInsToggle {
+			insert = !insert
+			// Move cursor up one line, redraw helper, move back down
+			fmt.Print("\033[1A") // up
+			printHelper()
+			fmt.Print("\033[1B") // down
+			continue
+		}
+
+		// ── Printable character ──────────────────────────────────────────
 		if key > 0 && unicode.IsPrint(rune(key)) {
 			if !wasKey {
 				buffer[0] = 0
@@ -89,12 +113,11 @@ func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
 					cursor++
 				}
 			} else {
-				// Replace mode: overwrite or append.
 				if cursor >= len(buffer)-1 {
 					beep()
 				} else {
 					if cursor == clen(buffer) {
-						buffer[cursor+1] = 0 // extend NUL terminator
+						buffer[cursor+1] = 0
 					}
 					buffer[cursor] = byte(key)
 					cursor++
@@ -103,7 +126,7 @@ func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
 			continue
 		}
 
-		// ── Control / special keys ───────────────────────────────────
+		// ── Control / special keys ───────────────────────────────────────
 		switch key {
 
 		case keyBack:
@@ -145,13 +168,12 @@ func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
 			cursor = clen(buffer)
 
 		case keyEnter:
-			fmt.Printf("\r\033[%dC", len(prompt)+2+clen(buffer))
 			fmt.Println()
 			return true
 
 		case keyCtrlG:
 			fmt.Println()
-			return false // cancel
+			return false
 
 		case keyCtrlU:
 			buffer[0] = 0
@@ -159,14 +181,11 @@ func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
 			wasKey = true
 
 		case keyCtrlR:
-			// Restore the original default value.
 			copy(buffer, saved)
 			cursor = clen(buffer)
 			wasKey = false
 
 		case keyCtrlP:
-			// Quote: insert the very next keypress literally,
-			// even if it is a control character.
 			if !wasKey {
 				buffer[0] = 0
 				cursor = 0
@@ -180,11 +199,11 @@ func (g getlineV4) GetLine(prompt string, buffer []byte) bool {
 				cursor++
 			}
 
-		case keyInsToggle:
-			insert = !insert
-
 		case keyCtrlL:
-			// Redisplay — loop will redraw at the top automatically.
+			// Redisplay helper + input line
+			fmt.Print("\033[1A") // up
+			printHelper()
+			fmt.Print("\033[1B") // down
 
 		default:
 			beep()

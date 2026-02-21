@@ -16,13 +16,13 @@ type Liner interface {
 // CHANGE ME — swap the struct literal to pick a different version.
 // ─────────────────────────────────────────────────────────────────
 
-var active Liner = getlineV1{}
+//var active Liner = getlineV1{}
 
 //var active Liner = getlineV2{}
 
 //var active Liner = getlineV3{}
 
-//var active Liner = getlineV4{}
+var active Liner = getlineV4{}
 
 // ─────────────────────────────────────────────────────────────────
 
